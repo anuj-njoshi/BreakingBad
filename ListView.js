@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
-import { withNavigation } from 'react-navigation';
 import { Search, Heart } from "react-native-feather";
+import { connect } from 'react-redux';
 
 
 
@@ -20,18 +20,14 @@ class ListView extends Component {
         })
     }
     componentDidMount = () => {
-        fetch('https://itunes.apple.com/search?term=Michael+jackson', {
+        fetch('https://www.breakingbadapi.com/api/characters', {
             method: 'GET'
         })
             .then((response) => response.json())
             .then((responseJson) => {
-
-
-                const filterData = this.arrayUnique(responseJson.results, 'trackId');
-                console.log('filterData' + filterData.length);
+                this.props.list(responseJson);
                 this.setState({
-                    data: filterData,
-                    count: responseJson.resultCount
+                    data: responseJson,
                 })
             })
             .catch((error) => {
@@ -46,6 +42,7 @@ class ListView extends Component {
 
     render() {
         const { data } = this.state;
+        console.log("data")
         if (!data.length) {
             return (
                 <View style={{
@@ -63,22 +60,34 @@ class ListView extends Component {
         const renderItem = ({ item }) => (
             <Item item={item} title={item.artistName} />
         );
-        const Item = ({ item, title }) => (
-            <TouchableOpacity onPress={() => this.props.navigation.navigate('PlayList', { item })}
-                style={{ flex: 1, top: 10, flexDirection: 'row', borderBottomColor: 'grey', borderBottomWidth: 1, padding: 5 }}>
-                <Image source={{ uri: item.artworkUrl60 }} style={{ width: 100, height: 100 }} />
-                <View style={{ flexDirection: 'column', padding: 5, left: 10 }}>
-                    <Text style={{ textAlign: 'left', fontSize: 12 }}>{item.collectionName}</Text>
-                    <Text style={{ textAlign: 'left', fontSize: 12 }}>{item.artistName}</Text>
+        const Item = ({ item, title, }) => (
+            <View onPress={() => this.props.navigation.navigate('PlayList', { item })}
+                style={{ flex: 1, padding: 20, flexDirection: 'column' }}>
+                <Image source={{ uri: item.img }} resizeMode="contain" style={{ flex: 1, width: 150, height: 200 }} />
+                <View style={{ flex: 1, left: 4, paddingVertical: 10, flexDirection: 'row' }}>
+                    <View style={{ flex: 1, flexDirection: 'column' }}>
+                        <Text style={{ textAlign: 'left', color: '#fff', fontSize: 12 }}>{item.name}</Text>
+                        <Text style={{ textAlign: 'left', color: '#fff', fontSize: 12 }}>{item.nickname}</Text>
+                    </View>
+
+                    {this.props.favouriteList.indexOf(item.char_id) !== -1 ?
+                        <TouchableOpacity onPress={() => this.props.remove(item.char_id, data)} style={{ flex: 0.4, flexDirection: 'row-reverse' }}>
+                            <Heart stroke="#18CA75" fill="#18CA75" width={33} height={25} />
+                        </TouchableOpacity>
+                        :
+                        <TouchableOpacity onPress={() => this.props.add(item.char_id, data)} style={{ flex: 0.4, flexDirection: 'row-reverse' }}>
+                            <Heart stroke="#18CA75" fill="#000" width={23} height={25} />
+                        </TouchableOpacity>
+                    }
                 </View>
-            </TouchableOpacity>
+            </View>
         );
         return (
             <>
                 <View style={{ flexDirection: 'row', paddingVertical: 5, backgroundColor: '#000', height: 60 }}>
-                    <Text style={{ color: '#fff',fontFamily:'roboto-bold', fontSize: 16, top: 10, padding: 5 }}>Breaking Bad</Text>
+                    <Text style={{ color: '#fff', fontSize: 16, top: 10, padding: 5 }}>The Breaking Bad</Text>
                     <View style={{ flex: 1, height: 60, flexDirection: 'row-reverse' }}>
-                        <TouchableOpacity style={{ top: 5, padding: 5 }}>
+                        <TouchableOpacity onPress={() => this.props.navigation.navigate('Favourites')} style={{ top: 5, padding: 5 }}>
                             <Heart stroke="#18CA75" fill="#18CA75" width={23} height={25} />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={() => this.props.navigation.navigate('SearchBar')} style={{ top: 5, padding: 5 }}>
@@ -87,11 +96,13 @@ class ListView extends Component {
                     </View>
                 </View>
 
-                <View style={{ flex: 1, backgroundColor: 'skyblue' }}>
+                <View style={{ flex: 1, backgroundColor: '#000' }}>
                     <FlatList
                         data={data}
                         renderItem={renderItem}
-                        keyExtractor={item => item.trackId}
+                        numColumns={2}
+
+                        keyExtractor={item => item.char_id}
                     />
                 </View>
             </>
@@ -99,7 +110,18 @@ class ListView extends Component {
     }
 
 }
-export default withNavigation(ListView);
+const mapStateToProps = (state) => ({
+    listData: state.favourite.listData,
+    favouriteList: state.favourite.favouriteList
+});
+
+const mapDispatchToProps = (dispatch) => ({
+    list: (data) => dispatch({ type: 'list', payload: { data } }),
+    add: (char_id, data) => dispatch({ type: 'add', payload: { char_id, data } }),
+    remove: (char_id, data) => dispatch({ type: 'remove', payload: { char_id, data } }),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(ListView);
 
 const styles = StyleSheet.create({
     container: {

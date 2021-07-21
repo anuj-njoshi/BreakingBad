@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, FlatList, Image, TouchableOpacity,TextInput } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 import { Search, Heart,X } from "react-native-feather";
 import { connect } from 'react-redux';
 
 
 
-class SearchBar extends Component {
+class Favourites extends Component {
     state = {
         data: [],
         count: []
@@ -23,48 +23,6 @@ class SearchBar extends Component {
       
 
     }
-    makeRemoteRequest = () => {
-        const { page, seed } = this.state
-        const url = `https://randomuser.me/api/?seed=${seed}&page=${page}&results=20`
-        this.setState({ loading: true })
-      
-        fetch(url)
-          .then(res => res.json())
-          .then(res => {
-            this.setState({
-              data: page === 1 ? res.results : [...this.state.data, ...res.results],
-              error: res.error || null,
-              loading: false,
-      
-              // ---- ADD THIS ----
-              fullData: res.results
-            })
-          })
-          .catch(error => {
-            this.setState({ error, loading: false })
-          })
-      }
-
-      renderHeader = () => (
-        <View
-          style={{
-            backgroundColor: '#242424',
-            padding: 10,
-            // alignItems: 'center',
-            // justifyContent: 'center'
-          }}>
-          <TextInput
-            autoCapitalize='none'
-            autoCorrect={false}
-            onChangeText={this.handleSearch}
-            status='info'
-            clearButtonMode='always'
-            placeholder='Search'
-            placeholderTextColor={'#ffffff'}
-            style={{ fontSize:24, height: 40,color:'#ffffff' }}
-          />
-        </View>
-      )
 
    
 
@@ -98,12 +56,20 @@ class SearchBar extends Component {
         );
         return (
             <>
+                <View style={{ flexDirection: 'row', paddingVertical: 5, backgroundColor: '#000', height: 60 }}>
+                <Text style={{ color: '#fff', fontSize: 16, top: 10, padding: 5 }}>Favourites</Text>
+                    <View style={{ flex: 1, height: 60, flexDirection: 'row-reverse' }}>
+                        
+                        <TouchableOpacity onPress={() => this.props.navigation.navigate('ListView')} style={{ top: 5, padding: 5 }}>
+                            <X stroke="#fff" fill="#000" width={23} height={25} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
 
                 <View style={{ flex: 1, backgroundColor: '#000' }}>
                     <FlatList
                         data={listFavourites}
                         renderItem={renderItem}
-                        ListHeaderComponent={this.renderHeader}
                         numColumns={2}
 
                         keyExtractor={item => item.char_id}
@@ -126,7 +92,7 @@ const mapDispatchToProps = (dispatch) => ({
    remove: () => dispatch({type: 'remove',ayload:{char_id}}),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(SearchBar);
+export default connect(mapStateToProps, mapDispatchToProps)(Favourites);
 
 const styles = StyleSheet.create({
     container: {
